@@ -5,6 +5,36 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    container_name: orders-spark
+    stdin_open: true
+    tty: true
     volumes:
       - ..:/app
     working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://orders_user:orders_pass@postgres:5432/orders_db
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: orders-postgres
+    environment:
+      POSTGRES_USER: orders_user
+      POSTGRES_PASSWORD: orders_pass
+      POSTGRES_DB: orders_db
+      POSTGRES_INITDB_ARGS: "-c log_statement=all"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders_user -d orders_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

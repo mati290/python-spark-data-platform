@@ -74,6 +74,8 @@ Output: Daily Revenue Report
 ├── docker/                      # Docker configuration
 │   ├── Dockerfile
 │   └── docker-compose.yml
+├── sql/                         # Database schema
+│   └── create_tables.sql        # PostgreSQL initialization
 ├── data_lake/                   # Data storage
 │   ├── raw/                     # Raw data
 │   └── processed/               # Processed data
@@ -154,6 +156,40 @@ docker run --rm -v C:\Users\<USER>\python-spark-data-platform:/app -w /app spark
 
 Workflow CI znajduje się w: `.github/workflows/ci.yml` — po wypchnięciu do repozytorium testy będą uruchamiane automatycznie na GitHubie.
 
+## PostgreSQL — Development & Warehouse
+
+Projekt integruje się z PostgreSQL do przechowywania przetworzonych danych. Do uruchomienia bazy używamy Docker Compose.
+
+### Start PostgreSQL + Spark
+```bash
+# Uruchom oba serwisy (Spark + PostgreSQL)
+docker-compose -f docker/docker-compose.yml up -d
+
+# Sprawdź logi
+docker-compose -f docker/docker-compose.yml logs -f spark
+
+# Zatrzymaj serwisy
+docker-compose -f docker/docker-compose.yml down
+```
+
+### Łączenie się z bazą
+```bash
+# Z hosta (jeśli Docker desktop)
+psql postgresql://orders_user:orders_pass@localhost:5432/orders_db
+
+# Z kontenera
+psql postgresql://orders_user:orders_pass@postgres:5432/orders_db
+```
+
+### Tabela daily_sales
+Przetwarzane dane (przychód dzienny) są zapisywane do tabeli `daily_sales`:
+
+```sql
+SELECT * FROM daily_sales ORDER BY order_date DESC;
+```
+
+Schemat bazy jest automatycznie tworzony przy starcie kontenera (plik `sql/create_tables.sql`).
+
 ## Development
 
 ### Adding New Tests
@@ -190,9 +226,10 @@ See [docs/kontrakt_projektu.md](docs/kontrakt_projektu.md) for detailed project 
 - [x] Processing module
 - [x] Unit tests
 - [x] Docker configuration
+- [x] PostgreSQL integration (daily_sales table)
 - [ ] Airflow DAGs
-- [ ] PostgreSQL integration
-- [ ] CI/CD pipeline
+- [ ] Advanced monitoring & alerting
+- [ ] CI/CD pipeline (basic GitHub Actions in place)
 
 ## License
 
