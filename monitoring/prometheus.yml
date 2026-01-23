@@ -1,0 +1,36 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'orders-platform'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - localhost:9093
+
+rule_files:
+  - '/etc/prometheus/alert_rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'orders-postgres'
+
+  - job_name: 'airflow-webserver'
+    static_configs:
+      - targets: ['orders-airflow-web:8080']
+    metrics_path: '/admin/metrics'
+
+  - job_name: 'airflow-scheduler'
+    static_configs:
+      - targets: ['orders-airflow-scheduler:8793']

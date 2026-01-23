@@ -290,6 +290,37 @@ See [docs/kontrakt_projektu.md](docs/kontrakt_projektu.md) for detailed project 
 | `PermissionError` | Check directory write permissions |
 | `PySpark not installed` | Run `pip install -r requirements.txt` |
 
+## Advanced Monitoring & Alerting
+
+Platform includes comprehensive monitoring with Prometheus, Grafana, and automated alerting.
+
+### Start Monitoring Stack
+```bash
+docker-compose -f docker/docker-compose.yml up -d prometheus grafana postgres-exporter
+```
+
+### Access Monitoring UIs
+| Component | URL | Credentials |
+|-----------|-----|-------------|
+| Prometheus | http://localhost:9090 | None |
+| Grafana | http://localhost:3000 | admin / admin |
+| postgres-exporter | http://localhost:9187/metrics | None |
+
+### Monitored Metrics
+- **Ingestion:** Record count, job duration
+- **Processing:** Records processed, execution time
+- **Data Warehouse:** Connections, table sizes, disk space
+- **Airflow:** Scheduler health, task/DAG failures
+- **Data Lake:** Ingestion latency, missing daily imports
+
+### Alert Rules
+Configured alerts for:
+- PostgreSQL down, high connections, low disk space
+- Airflow scheduler down, DAG/task failures
+- Data lake ingestion lag and missing imports
+
+**Full documentation:** [docs/monitoring.md](docs/monitoring.md)
+
 ## Status
 
 - [x] Ingestion module
@@ -300,7 +331,7 @@ See [docs/kontrakt_projektu.md](docs/kontrakt_projektu.md) for detailed project 
 - [x] Apache Airflow orchestration
 - [x] DataLake medallion architecture
 - [x] CI/CD pipeline (GitHub Actions)
-- [ ] Advanced monitoring & alerting
+- [x] Advanced monitoring & alerting (Prometheus + Grafana)
 - [ ] Real-time streaming (future)
 
 ## License

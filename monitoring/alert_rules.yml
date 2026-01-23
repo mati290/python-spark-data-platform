@@ -1,0 +1,78 @@
+groups:
+  - name: 'orders_platform'
+    interval: 30s
+    rules:
+      # PostgreSQL Alerts
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database {{ $labels.instance }} is not responding"
+
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_activity_count > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High PostgreSQL connection count"
+          description: "PostgreSQL has {{ $value }} active connections (threshold: 50)"
+
+      - alert: PostgreSQLLowDiskSpace
+        expr: pg_disk_available_bytes / pg_disk_total_bytes < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL disk space low"
+          description: "PostgreSQL has only {{ humanize $value }}% disk space remaining"
+
+      # Airflow Alerts
+      - alert: AirflowSchedulerDown
+        expr: up{job="airflow-scheduler"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Airflow Scheduler is down"
+          description: "Airflow scheduler has been unavailable for more than 2 minutes"
+
+      - alert: AirflowDAGFailure
+        expr: airflow_dag_runs_failed_total > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Airflow DAG execution failed"
+          description: "Airflow DAG {{ $labels.dag_id }} has failed runs"
+
+      - alert: AirflowTaskFailure
+        expr: airflow_task_fails_total > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Airflow task execution failed"
+          description: "Airflow task has failures. Check logs for details."
+
+      # DataLake Alerts
+      - alert: HighDataLakeLatency
+        expr: spark_job_duration_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High ETL job latency"
+          description: "ETL job took {{ humanize $value }}s (threshold: 300s)"
+
+      - alert: DataLakeDailyImportMissing
+        expr: time() - daily_import_timestamp_seconds > 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Daily ETL import not completed"
+          description: "No successful ETL import in the last 24 hours"

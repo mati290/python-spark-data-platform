@@ -11,6 +11,9 @@ def spark():
         .appName("pytest-spark")
         .config("spark.ui.enabled", "false")
         .config("spark.driver.bindAddress", "127.0.0.1")
+        # JVM options to allow Hadoop/Spark internals on newer JDKs
+        .config("spark.driver.extraJavaOptions", "--add-opens java.base/javax.security.auth=ALL-UNNAMED")
+        .config("spark.executor.extraJavaOptions", "--add-opens java.base/javax.security.auth=ALL-UNNAMED")
         .getOrCreate()
     )
     yield spark
