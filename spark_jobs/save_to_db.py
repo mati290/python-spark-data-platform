@@ -49,16 +49,27 @@ def save_to_postgres(df: pd.DataFrame, table_name: str = "daily_sales") -> bool:
         if hasattr(df["order_date"].dtype, 'name') and df["order_date"].dtype.name == 'datetime64[ns]':
             df["order_date"] = df["order_date"].dt.date
         
-        # Append/upsert into table (if exists, update; if not, insert)
-        # Using 'append' mode to add new rows; for upsert use 'replace' with proper logic
-        df.to_sql(
-            name=table_name,
-            con=engine,
-            if_exists="append",  # or 'replace' for full reload
-            index=False,
-            method="multi",
-            chunksize=1000,
-        )
+        # For SQLAlchemy 1.4.x compatibility, use raw SQL INSERT
+        with engine.begin() as conn:
+            # Create table if not exists
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS daily_sales (
+                    order_date DATE PRIMARY KEY,
+                    daily_revenue DECIMAL(12, 2) NOT NULL
+                )
+            """))
+            
+            # Insert data
+            for idx, row in df.iterrows():
+                conn.execute(text("""
+                    INSERT INTO daily_sales (order_date, daily_revenue)
+                    VALUES (:order_date, :daily_revenue)
+                    ON CONFLICT (order_date) DO UPDATE 
+                    SET daily_revenue = :daily_revenue
+                """), {
+                    "order_date": row["order_date"],
+                    "daily_revenue": float(row["daily_revenue"])
+                })
         
         logger.info(f"Successfully saved {len(df)} rows to {table_name}")
         
