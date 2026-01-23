@@ -328,6 +328,37 @@ Configured alerts for:
 
 **Full documentation:** [docs/monitoring.md](docs/monitoring.md)
 
+## Contributing
+
+This is an open-source data engineering platform. Contributions are welcome!
+
+For feature requests or bug reports, please open an issue on GitHub.
+
+## Getting Started
+
+The quickest way to get started is with Docker:
+
+```bash
+# Clone and setup
+git clone https://github.com/mati290/python-spark-data-platform.git
+cd python-spark-data-platform
+
+# Install local dependencies
+pip install -r requirements.txt
+
+# Start full stack with Docker
+docker-compose -f docker/docker-compose.yml up -d
+
+# Access services
+- Airflow: http://localhost:8080 (airflow/airflow)
+- Grafana: http://localhost:3000 (admin/admin)
+- Prometheus: http://localhost:9090
+- Spark: http://localhost:4040
+```
+
+For detailed documentation, see the sections above: [Quick Start](#quick-start), [Docker](#docker), [Architecture](#architecture).
+
+
 ## Status
 
 - [x] Ingestion module
@@ -343,4 +374,3 @@ Configured alerts for:
 
 ## License
 
-MIT
