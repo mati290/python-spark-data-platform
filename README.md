@@ -69,7 +69,7 @@ Output: Daily Revenue Report
 
 ```
 .
-├── ingestion/                    # CSV → Parquet ingestia
+├── ingestion/                    # CSV → Parquet ingestion
 │   ├── read_orders.py           # Main ingestion logic
 │   ├── validate_orders.py       # Schema validation
 │   └── schemas.py               # Data schemas
@@ -147,12 +147,12 @@ docker-compose -f docker/docker-compose.yml up
 docker run -v $(pwd):/app spark-platform:latest python spark_jobs/process_orders.py
 ```
 
-## CI — lokalna symulacja (Docker)
+## CI/CD — Local Simulation (Docker)
 
-Możesz zasymulować działanie GitHub Actions lokalnie, uruchamiając kroki CI w kontenerze. Przydatne gdy chcesz zweryfikować workflow przed pushem.
+You can simulate GitHub Actions locally by running CI steps in a container. Useful for verifying workflows before pushing.
 
 ```bash
-# Build image (jeśli jeszcze nie zbudowano)
+# Build image
 docker build -f docker/Dockerfile -t spark-platform:latest .
 
 # Unix / macOS
@@ -162,35 +162,35 @@ docker run --rm -v $(pwd):/app -w /app spark-platform:latest bash -lc "python3 -
 docker run --rm -v C:\Users\<USER>\python-spark-data-platform:/app -w /app spark-platform:latest bash -lc "python3 -m pip install --upgrade pip && pip install -r requirements.txt && pytest tests/ -v"
 ```
 
-Workflow CI znajduje się w: `.github/workflows/ci.yml` — po wypchnięciu do repozytorium testy będą uruchamiane automatycznie na GitHubie.
+CI workflow is located in `.github/workflows/ci.yml` — tests run automatically on GitHub after push.
 
-## PostgreSQL — Development & Warehouse
+## PostgreSQL — Development & Data Warehouse
 
-Projekt integruje się z PostgreSQL do przechowywania przetworzonych danych. Do uruchomienia bazy używamy Docker Compose.
+The project integrates with PostgreSQL to store processed data. Docker Compose is used to run the database.
 
 ### Start PostgreSQL + Spark
 ```bash
-# Uruchom oba serwisy (Spark + PostgreSQL)
+# Start both services (Spark + PostgreSQL)
 docker-compose -f docker/docker-compose.yml up -d
 
-# Sprawdź logi
+# Check logs
 docker-compose -f docker/docker-compose.yml logs -f spark
 
-# Zatrzymaj serwisy
+# Stop services
 docker-compose -f docker/docker-compose.yml down
 ```
 
-### Łączenie się z bazą
+### Connect to Database
 ```bash
-# Z hosta (jeśli Docker desktop)
+# From host (if Docker desktop)
 psql postgresql://orders_user:orders_pass@localhost:5432/orders_db
 
-# Z kontenera
+# From container
 psql postgresql://orders_user:orders_pass@postgres:5432/orders_db
 ```
 
-### Tabela daily_sales
-Przetwarzane dane (przychód dzienny) są zapisywane do tabeli `daily_sales`:
+### Daily Sales Table
+Processed data (daily revenue) is written to `daily_sales` table:
 
 ```sql
 SELECT * FROM daily_sales ORDER BY order_date DESC;
@@ -261,7 +261,7 @@ python scripts/init_datalake.py
 ```
 
 ### DataLake Details
-Pełna dokumentacja: [docs/datalake_architecture.md](docs/datalake_architecture.md)
+Full documentation: [docs/datalake_architecture.md](docs/datalake_architecture.md)
 - Partitioning strategy (date-based)
 - Data governance & quality checks
 - Access patterns (PySpark, SQL)
