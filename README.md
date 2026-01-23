@@ -6,7 +6,8 @@ End-to-end data engineering platform built with Python and Apache Spark for proc
 - Python 3.10+
 - Apache Spark 3.5.1
 - Pandas + PyArrow
-- PostgreSQL (planned)
+- PostgreSQL (data warehouse)
+- Apache Airflow (orchestration)
 - Docker & Docker Compose
 - pytest
 
@@ -226,6 +227,39 @@ Trzy główne zadania:
 2. **processing** — Agreguje dane, zapisuje do Parquetu i PostgreSQL
 3. **warehouse_check** — Weryfikuje liczbę wierszy w tabeli `daily_sales`
 
+## DataLake
+
+Architektura **medallion** (bronze/silver/gold):
+
+```
+data_lake/
+├── raw/               # Bronze - raw ingested data
+│   └── orders/
+│       └── ingestion_date=YYYY-MM-DD/
+│           └── orders.parquet
+│
+└── processed/         # Silver - cleaned & aggregated
+    └── daily_sales/
+        └── processing_date=YYYY-MM-DD/
+            └── part-*.parquet
+            
+        ↓ (upsert into)
+        
+PostgreSQL: daily_sales table (Gold)
+```
+
+### Initialize DataLake
+```bash
+python scripts/init_datalake.py
+```
+
+### DataLake Details
+Pełna dokumentacja: [docs/datalake_architecture.md](docs/datalake_architecture.md)
+- Partitioning strategy (date-based)
+- Data governance & quality checks
+- Access patterns (PySpark, SQL)
+- Maintenance & backups
+
 ## Development
 
 ### Adding New Tests
@@ -263,9 +297,11 @@ See [docs/kontrakt_projektu.md](docs/kontrakt_projektu.md) for detailed project 
 - [x] Unit tests
 - [x] Docker configuration
 - [x] PostgreSQL integration (daily_sales table)
-- [ ] Airflow DAGs
+- [x] Apache Airflow orchestration
+- [x] DataLake medallion architecture
+- [x] CI/CD pipeline (GitHub Actions)
 - [ ] Advanced monitoring & alerting
-- [ ] CI/CD pipeline (basic GitHub Actions in place)
+- [ ] Real-time streaming (future)
 
 ## License
 
