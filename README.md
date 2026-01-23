@@ -2,12 +2,19 @@
 
 End-to-end data engineering platform built with Python and Apache Spark for processing orders data.
 
+## Quick Links
+- **Prometheus** (metrics): http://localhost:9090
+- **Grafana** (dashboards): http://localhost:3000 (admin/admin)
+- **Airflow** (orchestration): http://localhost:8080 (airflow/airflow)
+- **postgres-exporter** (metrics): http://localhost:9187
+
 ## Tech stack
 - Python 3.10+
 - Apache Spark 3.5.1
 - Pandas + PyArrow
 - PostgreSQL (data warehouse)
 - Apache Airflow (orchestration)
+- Prometheus + Grafana (monitoring)
 - Docker & Docker Compose
 - pytest
 
