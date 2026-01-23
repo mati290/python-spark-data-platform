@@ -190,6 +190,42 @@ SELECT * FROM daily_sales ORDER BY order_date DESC;
 
 Schemat bazy jest automatycznie tworzony przy starcie kontenera (plik `sql/create_tables.sql`).
 
+## Apache Airflow — Orchestration
+
+Airflow koordynuje całą pipelinę ETL (ingestia → przetwarzanie → zapis do bazy).
+
+### Start Airflow + PostgreSQL + Spark
+```bash
+# Uruchom wszystkie serwisy (Spark + PostgreSQL + Airflow)
+docker-compose -f docker/docker-compose.yml up -d
+
+# Sprawdź status
+docker-compose -f docker/docker-compose.yml ps
+
+# Wyłącz
+docker-compose -f docker/docker-compose.yml down
+```
+
+### Airflow Web UI
+Dostępny na: **http://localhost:8080**
+- Domyślny login: `airflow` / `airflow`
+- DAG: `orders_etl_pipeline` uruchamia się codziennie o północy (schedule: `@daily`)
+
+### Ręczne uruchomienie DAG
+```bash
+# Trigger DAG z hosta
+docker exec -i orders-airflow-scheduler airflow dags trigger orders_etl_pipeline
+
+# Sprawdź status zadań
+docker exec -i orders-airflow-scheduler airflow tasks list orders_etl_pipeline
+```
+
+### DAG Tasks
+Trzy główne zadania:
+1. **ingestion** — Czyta CSV, zapisuje Parquet do `data_lake/raw/orders/`
+2. **processing** — Agreguje dane, zapisuje do Parquetu i PostgreSQL
+3. **warehouse_check** — Weryfikuje liczbę wierszy w tabeli `daily_sales`
+
 ## Development
 
 ### Adding New Tests

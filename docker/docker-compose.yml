@@ -36,5 +36,52 @@ services:
       timeout: 5s
       retries: 5
 
+  airflow-webserver:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: orders-airflow-web
+    command: airflow webserver
+    ports:
+      - "8080:8080"
+    volumes:
+      - ..:/app
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW_HOME=/app/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql://orders_user:orders_pass@postgres:5432/orders_db
+      - AIRFLOW__CORE__DAGS_FOLDER=/app/airflow/dags
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - DATABASE_URL=postgresql://orders_user:orders_pass@postgres:5432/orders_db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  airflow-scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: orders-airflow-scheduler
+    command: bash -c "airflow db upgrade && airflow scheduler"
+    volumes:
+      - ..:/app
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-webserver:
+        condition: service_started
+    environment:
+      - AIRFLOW_HOME=/app/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql://orders_user:orders_pass@postgres:5432/orders_db
+      - AIRFLOW__CORE__DAGS_FOLDER=/app/airflow/dags
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - DATABASE_URL=postgresql://orders_user:orders_pass@postgres:5432/orders_db
+
 volumes:
   postgres-data:
