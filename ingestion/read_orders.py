@@ -15,40 +15,40 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Konfiguracja ścieżek
+# Data lake configuration
 DATA_LAKE_PATH = Path("data_lake") / "raw" / "orders"
 PARQUET_FILENAME = "orders.parquet"
 
 
 def read_orders_csv(path: str) -> pd.DataFrame:
     """
-    Czyta i waliduje dane zamówień z pliku CSV, zapisuje do data lake'u.
+    Read and validate order data from CSV file and write to data lake.
     
     Args:
-        path: Ścieżka do pliku CSV
+        path: Path to CSV file
         
     Returns:
-        DataFrame ze zwalidowanymi danymi
+        DataFrame with validated data
         
     Raises:
-        FileNotFoundError: Jeśli plik nie istnieje
-        ValueError: Jeśli schemat jest nieprawidłowy lub DataFrame jest pusty
-        OSError: Jeśli zapis do dysku się nie powiedzie
+        FileNotFoundError: If file does not exist
+        ValueError: If schema is invalid or DataFrame is empty
+        OSError: If write to disk fails
     """
     
     input_path = Path(path)
     if not input_path.exists():
-        raise FileNotFoundError(f"Plik nie istnieje: {path}")
+        raise FileNotFoundError(f"File does not exist: {path}")
     
-    logger.info(f"Czytanie danych z {path}")
+    logger.info(f"Reading data from {path}")
     
    
     df = pd.read_csv(path)
     
     if df.empty:
-        raise ValueError("Plik CSV jest pusty")
+        raise ValueError("CSV file is empty")
     
-    logger.info(f"Wczytano {len(df)} wierszy")
+    logger.info(f"Loaded {len(df)} rows")
     if METRICS_ENABLED:
         ingestion_records.labels(status='read').inc(len(df))
     
@@ -63,11 +63,11 @@ def read_orders_csv(path: str) -> pd.DataFrame:
     
     try:
         df_valid.to_parquet(str(output_file), index=False)
-        logger.info(f"Dane zapisane do {output_file}")
+        logger.info(f"Data written to {output_file}")
         if METRICS_ENABLED:
             ingestion_records.labels(status='success').inc(len(df_valid))
     except OSError as e:
-        logger.error(f"Błąd zapisu do Parquetu: {e}")
+        logger.error(f"Error writing to Parquet: {e}")
         if METRICS_ENABLED:
             ingestion_records.labels(status='error').inc()
         raise

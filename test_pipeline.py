@@ -10,12 +10,12 @@ print("\n=== INGESTION: CSV → Parquet ===")
 from ingestion.read_orders import read_orders_csv
 
 df_raw = read_orders_csv('input/orders/orders_sample.csv')
-print(f"✓ Wczytano {len(df_raw)} wierszy")
+print(f"✓ Loaded {len(df_raw)} rows")
 print(df_raw)
 
 print("\n=== PROCESSING: Raw → Processed ===")
 
-# Czyszczenie
+# Cleaning
 df_clean = df_raw.copy()
 df_clean['order_date'] = pd.to_datetime(df_clean['order_date'])
 df_clean = df_clean[df_clean['order_id'].notna()]
@@ -26,7 +26,7 @@ df_clean = df_clean[(df_clean['quantity'] > 0) & (df_clean['price'] > 0)]
 rows_before = len(df_raw)
 rows_after = len(df_clean)
 rows_removed = rows_before - rows_after
-print(f"Czyszczenie: {rows_removed} wierszy usunięto ({rows_before} → {rows_after})")
+print(f"Cleaning: {rows_removed} rows removed ({rows_before} → {rows_after})")
 
 # Agregacja
 df_daily = df_clean.groupby('order_date').agg({

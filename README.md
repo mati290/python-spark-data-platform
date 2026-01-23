@@ -27,25 +27,25 @@ pip install -r requirements.txt
 
 ### 2. Run ETL Pipeline
 
-**Krok 1: Ingestia (CSV → Parquet)**
+**Step 1: Ingestion (CSV → Parquet)**
 ```bash
 python -c "from ingestion.read_orders import read_orders_csv; read_orders_csv('input/orders/orders_sample.csv')"
 ```
 
-**Krok 2: Przetwarzanie (Spark)**
+**Step 2: Processing (Spark)**
 ```bash
 python spark_jobs/process_orders.py
 ```
 
 ### 3. Run Tests
 ```bash
-# Wszystkie testy
+# All tests
 pytest tests/ -v
 
-# Tylko ingestia
+# Ingestion only
 pytest tests/ingestion/ -v
 
-# Tylko processing
+# Processing only
 pytest tests/spark_jobs/ -v
 ```
 
@@ -196,47 +196,47 @@ Przetwarzane dane (przychód dzienny) są zapisywane do tabeli `daily_sales`:
 SELECT * FROM daily_sales ORDER BY order_date DESC;
 ```
 
-Schemat bazy jest automatycznie tworzony przy starcie kontenera (plik `sql/create_tables.sql`).
+Database schema is automatically created when the container starts (file `sql/create_tables.sql`).
 
 ## Apache Airflow — Orchestration
 
-Airflow koordynuje całą pipelinę ETL (ingestia → przetwarzanie → zapis do bazy).
+Airflow orchestrates the entire ETL pipeline (ingestion → processing → database write).
 
 ### Start Airflow + PostgreSQL + Spark
 ```bash
-# Uruchom wszystkie serwisy (Spark + PostgreSQL + Airflow)
+# Start all services (Spark + PostgreSQL + Airflow)
 docker-compose -f docker/docker-compose.yml up -d
 
-# Sprawdź status
+# Check status
 docker-compose -f docker/docker-compose.yml ps
 
-# Wyłącz
+# Stop
 docker-compose -f docker/docker-compose.yml down
 ```
 
 ### Airflow Web UI
-Dostępny na: **http://localhost:8080**
-- Domyślny login: `airflow` / `airflow`
-- DAG: `orders_etl_pipeline` uruchamia się codziennie o północy (schedule: `@daily`)
+Available at: **http://localhost:8080**
+- Default login: `airflow` / `airflow`
+- DAG: `orders_etl_pipeline` runs daily at midnight (schedule: `@daily`)
 
-### Ręczne uruchomienie DAG
+### Manual DAG trigger
 ```bash
-# Trigger DAG z hosta
+# Trigger DAG from host
 docker exec -i orders-airflow-scheduler airflow dags trigger orders_etl_pipeline
 
-# Sprawdź status zadań
+# Check task status
 docker exec -i orders-airflow-scheduler airflow tasks list orders_etl_pipeline
 ```
 
 ### DAG Tasks
-Trzy główne zadania:
-1. **ingestion** — Czyta CSV, zapisuje Parquet do `data_lake/raw/orders/`
-2. **processing** — Agreguje dane, zapisuje do Parquetu i PostgreSQL
-3. **warehouse_check** — Weryfikuje liczbę wierszy w tabeli `daily_sales`
+Three main tasks:
+1. **ingestion** — Read CSV, write Parquet to `data_lake/raw/orders/`
+2. **processing** — Aggregate data, write to Parquet and PostgreSQL
+3. **warehouse_check** — Verify row count in `daily_sales` table
 
 ## DataLake
 
-Architektura **medallion** (bronze/silver/gold):
+**Medallion** architecture (bronze/silver/gold):
 
 ```
 data_lake/

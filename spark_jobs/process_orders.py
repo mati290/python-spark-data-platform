@@ -10,7 +10,7 @@ from spark_jobs.save_to_db import save_to_postgres
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Konfiguracja ścieżek
+# Configuration paths
 DATA_LAKE_RAW = Path("data_lake") / "raw" / "orders"
 DATA_LAKE_PROCESSED = Path("data_lake") / "processed" / "daily_sales"
 
@@ -18,19 +18,19 @@ REQUIRED_COLUMNS = {"order_id", "order_date", "customer_id", "product_id", "quan
 
 
 def _validate_schema(df) -> None:
-    """Waliduje schemat dataframe'u."""
+    """Validate DataFrame schema."""
     if isinstance(df, type(None)):
-        raise ValueError("DataFrame jest None")
+        raise ValueError("DataFrame is None")
     
     missing_cols = REQUIRED_COLUMNS - set(df.columns)
     if missing_cols:
-        raise ValueError(f"Brakujące kolumny: {missing_cols}")
-    logger.info("✓ Schemat danych jest prawidłowy")
+        raise ValueError(f"Missing columns: {missing_cols}")
+    logger.info("✓ Data schema is valid")
 
 
 def _clean_orders(df):
-    """Czyści dane zamówień."""
-    logger.info("Czyszczenie danych...")
+    """Clean order data."""
+    logger.info("Cleaning data...")
     
     # Obsługa zarówno Pandas jak i Spark DataFrame
     is_pandas = hasattr(df, 'copy') and not hasattr(df, 'withColumn')
@@ -57,14 +57,14 @@ def _clean_orders(df):
     rows_after = len(df_clean) if is_pandas else df_clean.count()
     removed = rows_before - rows_after
     
-    logger.info(f"Usunięto {removed} nieprawidłowych wierszy ({rows_before} → {rows_after})")
+    logger.info(f"Removed {removed} invalid rows ({rows_before} → {rows_after})")
     
     return df_clean
 
 
 def _aggregate_daily_sales(df):
-    """Agreguje dane do dziennych sprzedaży."""
-    logger.info("Agregacja danych do dziennych sprzedaży...")
+    """Aggregate data to daily sales."""
+    logger.info("Aggregating data to daily sales...")
     
     is_pandas = hasattr(df, 'groupby') and not hasattr(df, 'withColumn')
     
@@ -88,49 +88,49 @@ def _aggregate_daily_sales(df):
         )
     
     count = len(df_daily) if is_pandas else df_daily.count()
-    logger.info(f"Utworzono {count} dni ze sprzedażą")
+    logger.info(f"Created {count} days with sales")
     
     return df_daily
 
 
 def process_orders(input_path: str, output_path: str) -> None:
     """
-    Przetwarzaj zamówienia z raw do processed.
+    Process orders from raw to processed.
     
     Args:
-        input_path: Ścieżka do parquetu z surowymi danymi
-        output_path: Ścieżka do zapisania przetworzonych danych
+        input_path: Path to parquet with raw data
+        output_path: Path to write processed data
         
     Raises:
-        FileNotFoundError: Jeśli input_path nie istnieje
-        ValueError: Jeśli dane mają nieprawidłowy schemat
+        FileNotFoundError: If input_path does not exist
+        ValueError: If data has invalid schema
     """
     try:
         spark = get_spark_session()
         
-        # Weryfikacja ścieżki
+        # Path verification
         input_p = Path(input_path)
         if not input_p.exists():
-            raise FileNotFoundError(f"Ścieżka input nie istnieje: {input_path}")
+            raise FileNotFoundError(f"Input path does not exist: {input_path}")
         
-        logger.info(f"Wczytywanie danych z {input_path}")
+        logger.info(f"Loading data from {input_path}")
         df_orders = spark.read.parquet(input_path)
-        logger.info(f"Wczytano {df_orders.count()} wierszy")
+        logger.info(f"Loaded {df_orders.count()} rows")
         
-        # Walidacja
+        # Validation
         _validate_schema(df_orders)
         
-        # Przetwarzanie
+        # Processing
         df_clean = _clean_orders(df_orders)
         df_sales = _aggregate_daily_sales(df_clean)
         
-        # Zapis do Parquetu
+        # Write to Parquet
         output_p = Path(output_path)
         output_p.parent.mkdir(parents=True, exist_ok=True)
         
-        logger.info(f"Zapis do {output_path}")
-        # Aby zachować typ string dla `order_date` i ułatwić konsumpcję poza Sparkiem,
-        # rzutujemy datę na string i zapisujemy bez partycjonowania.
+        logger.info(f"Writing to {output_path}")
+        # To preserve string type for `order_date` and ease consumption outside Spark,
+        # cast date to string and write without partitioning.
         df_to_write = df_sales.withColumn("order_date", date_format(col("order_date"), "yyyy-MM-dd"))
         (df_to_write
             .write
@@ -138,27 +138,27 @@ def process_orders(input_path: str, output_path: str) -> None:
             .parquet(output_path)
         )
         
-        # Konwersja do Pandas dla zapisu do DB
-        logger.info("Konwersja do Pandas dla zapisu do PostgreSQL...")
+        # Convert to Pandas for DB write
+        logger.info("Converting to Pandas for PostgreSQL write...")
         df_sales_pandas = df_sales.toPandas()
         
-        # Zapis do PostgreSQL
+        # Write to PostgreSQL
         db_success = save_to_postgres(df_sales_pandas)
         if db_success:
-            logger.info("✓ Dane zapisane do PostgreSQL pomyślnie")
+            logger.info("✓ Data written to PostgreSQL successfully")
         else:
-            logger.warning("⚠ Zapis do PostgreSQL nie udał się, ale przetwarzanie kontynuuje")
+            logger.warning("⚠ PostgreSQL write failed, but processing continues")
         
-        logger.info("✓ Przetwarzanie zakończone pomyślnie")
+        logger.info("✓ Processing completed successfully")
         
     except FileNotFoundError as e:
-        logger.error(f"Błąd: {e}")
+        logger.error(f"Error: {e}")
         raise
     except ValueError as e:
-        logger.error(f"Błąd walidacji: {e}")
+        logger.error(f"Validation error: {e}")
         raise
     except Exception as e:
-        logger.error(f"Nieoczekiwany błąd: {e}")
+        logger.error(f"Unexpected error: {e}")
         raise
 
 

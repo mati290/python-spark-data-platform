@@ -10,32 +10,32 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType, 
 
 @pytest.fixture
 def sample_df():
-    """Tworzy sample DataFrame z danymi zamówień."""
+    """Create sample DataFrame with order data."""
     data = {
         'order_id': [1, 2, 3, 4, 5],
         'order_date': ['2024-01-01', '2024-01-01', '2024-01-02', '2024-01-02', '2024-01-02'],
         'customer_id': [1001, 1002, 1003, 1004, 1005],
         'product_id': [2001, 2002, 2003, 2004, 2005],
-        'quantity': [2, 1, 3, 0, 2],  # 0 będzie odfiltrowane
-        'price': [10.0, 5.0, 7.0, -5.0, 3.0]  # -5.0 będzie odfiltrowane
+        'quantity': [2, 1, 3, 0, 2],  # 0 will be filtered
+        'price': [10.0, 5.0, 7.0, -5.0, 3.0]  # -5.0 will be filtered
     }
     return pd.DataFrame(data)
 
 
 def test_validate_schema_valid(sample_df):
-    """Test walidacji schemy - poprawny schemat."""
-    # Powinno przejść bez błędu
+    """Test schema validation - valid schema."""
+    # Should pass without error
     try:
         _validate_schema(sample_df)
     except ValueError:
-        pytest.fail("Walidacja schemy nie powinna się nie powieść dla poprawnych danych")
+        pytest.fail("Schema validation should not fail for valid data")
 
 
 def test_validate_schema_missing_columns():
-    """Test walidacji schemy - brakujące kolumny."""
+    """Test schema validation - missing columns."""
     df = pd.DataFrame({'order_id': [1], 'order_date': ['2024-01-01']})
     
-    with pytest.raises(ValueError, match="Brakujące kolumny"):
+    with pytest.raises(ValueError, match="Missing columns"):
         _validate_schema(df)
 
 
