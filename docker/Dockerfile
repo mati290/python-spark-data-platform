@@ -23,9 +23,5 @@ RUN pip3 install --no-cache-dir -r requirements.txt && \
 
 COPY . .
 
-# Zmienne konfiguracyjne
-ENV INPUT_PATH="data_lake/raw/orders/ingestion_date=2026-01-22"
-ENV OUTPUT_PATH="data_lake/processed/daily_sales/processing_date=2026-01-22"
-
 # Default entrypoint - can be overridden in docker-compose or at runtime
 CMD ["/bin/bash"]

@@ -6,6 +6,7 @@ from pyspark.sql.functions import col, to_date, sum as spark_sum, date_format
 
 from spark_jobs.spark_session import get_spark_session
 from spark_jobs.save_to_db import save_to_postgres
+from ingestion.schemas import ORDERS_SCHEMA
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 DATA_LAKE_RAW = Path("data_lake") / "raw" / "orders"
 DATA_LAKE_PROCESSED = Path("data_lake") / "processed" / "daily_sales"
 
-REQUIRED_COLUMNS = {"order_id", "order_date", "customer_id", "product_id", "quantity", "price"}
+REQUIRED_COLUMNS = set(ORDERS_SCHEMA)
 
 
 def _validate_schema(df) -> None:
@@ -144,10 +145,9 @@ def process_orders(input_path: str, output_path: str) -> None:
         
         # Write to PostgreSQL
         db_success = save_to_postgres(df_sales_pandas)
-        if db_success:
-            logger.info("✓ Data written to PostgreSQL successfully")
-        else:
-            logger.warning("⚠ PostgreSQL write failed, but processing continues")
+        if not db_success:
+            raise RuntimeError("Failed to write processed data to PostgreSQL")
+        logger.info("✓ Data written to PostgreSQL successfully")
         
         logger.info("✓ Processing completed successfully")
         

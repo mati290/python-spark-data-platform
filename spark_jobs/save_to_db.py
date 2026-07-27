@@ -51,25 +51,28 @@ def save_to_postgres(df: pd.DataFrame, table_name: str = "daily_sales") -> bool:
         
         # For SQLAlchemy 1.4.x compatibility, use raw SQL INSERT
         with engine.begin() as conn:
-            # Create table if not exists
+            # Schema must stay in sync with sql/create_tables.sql
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS daily_sales (
-                    order_date DATE PRIMARY KEY,
-                    daily_revenue DECIMAL(12, 2) NOT NULL
+                    id SERIAL PRIMARY KEY,
+                    order_date DATE NOT NULL,
+                    daily_revenue FLOAT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(order_date)
                 )
             """))
-            
-            # Insert data
-            for idx, row in df.iterrows():
-                conn.execute(text("""
-                    INSERT INTO daily_sales (order_date, daily_revenue)
-                    VALUES (:order_date, :daily_revenue)
-                    ON CONFLICT (order_date) DO UPDATE 
-                    SET daily_revenue = :daily_revenue
-                """), {
-                    "order_date": row["order_date"],
-                    "daily_revenue": float(row["daily_revenue"])
-                })
+
+            # Bulk upsert instead of row-by-row inserts
+            records = [
+                {"order_date": row["order_date"], "daily_revenue": float(row["daily_revenue"])}
+                for _, row in df.iterrows()
+            ]
+            conn.execute(text("""
+                INSERT INTO daily_sales (order_date, daily_revenue)
+                VALUES (:order_date, :daily_revenue)
+                ON CONFLICT (order_date) DO UPDATE
+                SET daily_revenue = :daily_revenue
+            """), records)
         
         logger.info(f"Successfully saved {len(df)} rows to {table_name}")
         

@@ -1,5 +1,6 @@
 import pytest
 from pyspark.sql import SparkSession, Row
+import spark_jobs.process_orders as process_orders_module
 from spark_jobs.process_orders import process_orders
 
 
@@ -22,7 +23,11 @@ def spark():
     spark.stop()
 
 
-def test_process_orders_daily_revenue(spark, tmp_path):
+def test_process_orders_daily_revenue(spark, tmp_path, monkeypatch):
+    # This test exercises Spark cleaning/aggregation only; it does not
+    # depend on a live PostgreSQL instance being available.
+    monkeypatch.setattr(process_orders_module, "save_to_postgres", lambda df: True)
+
     data = [
         Row(order_id=1, order_date="2024-01-01", customer_id=1002, product_id=2002, quantity=1, price=1.0),
         Row(order_id=2, order_date="2024-01-02", customer_id=1003, product_id=2003, quantity=3, price=5.0),
