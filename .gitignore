@@ -9,3 +9,8 @@ venv/
 data_lake/
 *.log
 .DS_Store
+airflow/airflow.cfg
+airflow/logs/
+
+airflow/airflow-webserver.pid
+airflow/webserver_config.py

@@ -8,4 +8,7 @@ sqlalchemy>=1.4.28,<2.0
 psycopg2-binary>=2.9.0
 apache-airflow==2.8.1
 apache-airflow-providers-postgres==5.10.0
+# Airflow 2.8.1 imports flask_session.sessions.SqlAlchemySessionInterface,
+# which was removed in flask-session>=0.6. Pin to the last compatible release.
+flask-session==0.5.0
 prometheus-client>=0.17.0

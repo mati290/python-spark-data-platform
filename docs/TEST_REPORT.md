@@ -1,5 +1,11 @@
 # Test Report - Full Test Suite
 
+> **Historical snapshot** — captured 2026-01-23. Kept for reference only;
+> it does not reflect later behavior changes (e.g. `process_orders()` now
+> raises on a failed PostgreSQL write instead of degrading gracefully —
+> see "Missing Coverage" section below). Run `pytest tests/ -v` for
+> current results.
+
 **Date:** 2026-01-23
 **Platform:** Docker (Linux, Python 3.10.12)
 **Test Framework:** pytest 9.0.2
@@ -128,7 +134,7 @@ Duration:       10.56s
 | Code | Reason | Impact |
 |------|--------|--------|
 | error handling paths | Exception scenarios | Low - tested in unit tests |
-| DB error recovery | Connection failures | Low - graceful degradation |
+| DB error recovery | Connection failures | Low - now raises RuntimeError instead of degrading gracefully (see historical-snapshot note above) |
 | Logging statements | Not critical | None |
 
 ---

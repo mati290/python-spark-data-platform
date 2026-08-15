@@ -1,0 +1,13 @@
+.git/
+venv/
+.venv/
+__pycache__/
+*.pyc
+data_lake/
+airflow/logs/
+*.log
+.DS_Store
+.idea/
+.vscode/
+.pytest_cache/
+.coverage

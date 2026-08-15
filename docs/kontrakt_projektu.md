@@ -118,13 +118,16 @@ docker build -f docker/Dockerfile -t spark-platform:latest .
 docker-compose -f docker/docker-compose.yml up
 ```
 
-## Zmienne środowiskowe
+## Konfiguracja ścieżek
 
-| Zmienna | Domyślnie | Opis |
-|---------|-----------|------|
-| `INPUT_PATH` | `data_lake/raw/orders/...` | Ścieżka do raw data |
-| `OUTPUT_PATH` | `data_lake/processed/daily_sales/...` | Ścieżka do przetworzonych danych |
-| `SPARK_MASTER` | `local[*]` | Master Spark |
+`process_orders.py` nie czyta ścieżek ze zmiennych środowiskowych — przyjmuje je jako argumenty pozycyjne CLI (patrz sekcja "Pipeline" powyżej). Gdy uruchamiany bez argumentów, domyślnie używa:
+
+| Ścieżka | Domyślna wartość |
+|---------|-------------------|
+| Input | `data_lake/raw/orders/ingestion_date={dzisiejsza data}` |
+| Output | `data_lake/processed/daily_sales/processing_date={dzisiejsza data}` |
+
+Master Sparka jest zahardkodowany na `local[*]` w `spark_jobs/spark_session.py` i nie jest obecnie konfigurowalny.
 
 ## Historia zmian
 

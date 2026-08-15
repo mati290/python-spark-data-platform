@@ -18,8 +18,7 @@ ENV PATH=$SPARK_HOME/bin:$PATH
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt && \
-    pip3 install --no-cache-dir pydantic==1.10.15
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
